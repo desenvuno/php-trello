@@ -90,9 +90,9 @@ class Trello
      * __construct
      *
      * @param  string $consumer_key
-     * @param  string $token         [optional]
+     * @param  string $token [optional]
      * @param  string $shared_secret [optional]
-     * @param  string $oauth_secret  [optional]
+     * @param  string $oauth_secret [optional]
      * @throws \Exception
      */
     public function __construct($consumer_key, $shared_secret = null, $token = null, $oauth_secret = null)
@@ -170,7 +170,8 @@ class Trello
      *
      * @return string
      */
-    public function oauthSecret() {
+    public function oauthSecret()
+    {
         return $this->oauth_secret;
     }
 
@@ -179,7 +180,8 @@ class Trello
      *
      * @param string $secret
      */
-    public function setOauthSecret($secret) {
+    public function setOauthSecret($secret)
+    {
         $this->oauth_secret = $secret;
     }
 
@@ -374,13 +376,14 @@ class Trello
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, "php-trello/$this->version");
         curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+        curl_setopt($ch, CURLOPT_SSLVERSION, 6);
 
         switch ($method) {
             case 'GET':
                 break;
             case 'POST':
                 curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($restData, '', '&'));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $restData);
                 $restData = array();
                 break;
             case 'PUT':
@@ -428,8 +431,8 @@ class Trello
      * Parse arguments sent to the rest function.  Might be extended in future for callbacks.
      *
      * @param  string $method
-	 * @param  string $path
-	 * @param  array $data
+     * @param  string $path
+     * @param  array $data
      * @return string
      */
     public function buildRequestUrl($method, $path, $data)
@@ -439,14 +442,15 @@ class Trello
         // If we're using oauth, account for it
         if ($this->canOauth()) {
             $oauth = new OAuthSimple($this->consumer_key, $this->shared_secret);
-            $oauth->setTokensAndSecrets(array('access_token' => $this->token,'access_secret' => $this->oauth_secret,))
-                  ->setParameters($data);
+            $oauth->setTokensAndSecrets(array('access_token' => $this->token, 'access_secret' => $this->oauth_secret,))
+                ->setParameters($data);
             $request = $oauth->sign(array('path' => $url));
             return $request['signed_url'];
         } else {
             // These methods require the data appended to the URL
             if (in_array($method, array('GET', 'DELETE', 'DEL')) && !empty($data)) {
-                $url .= '?' . http_build_query($data, '', '&');
+                $character = (strpos($url, '?') === false) ? '?' : '&';
+                $url .= $character . http_build_query($data, '', '&');
             }
 
             return $url;
@@ -494,7 +498,8 @@ class Trello
      *
      * @return string
      */
-    protected function callbackUri() {
+    protected function callbackUri()
+    {
         if (empty($_SERVER['REQUEST_URI'])) {
             return '';
         }
